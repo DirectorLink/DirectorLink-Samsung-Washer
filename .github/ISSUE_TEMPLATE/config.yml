@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Downloads and help
+    url: https://directorlink.io/drivers/samsung-washer
+    about: Download the driver and read the setup guide
+  - name: DirectorLink
+    url: https://directorlink.io
+    about: The open-source management layer for Control4 homes

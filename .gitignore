@@ -1,0 +1,17 @@
+# Local build/temp files
+dist/
+build/
+__pycache__/
+*.pyc
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Local tool configuration and secrets: never committed (scripts/check_repo.py fails the build if they are).
+.claude.json
+.claude/
+.env
+.env.*
+*.pem
+*.key
+*oauth_state*.json

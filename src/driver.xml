@@ -1,0 +1,465 @@
+<devicedata>
+	<copyright>Copyright 2026 DirectorLink</copyright>
+	<creator>DirectorLink</creator>
+	<manufacturer>Samsung</manufacturer>
+	<name>DirectorLink · Samsung Washer</name>
+	<model>Washer (SmartThings)</model>
+	<created>10/10/2026 12:00</created>
+	<modified>10/10/2026 12:00</modified>
+	<!-- scripts/build.py stamps this from the VERSION file (major*1000000 + minor*10000 + patch*100 + build,
+	     build = the beta number, or 99 for a release). -->
+	<version>1000000</version>
+	<small image_source="c4z">icons/device_sm.png</small>
+	<large image_source="c4z">icons/device_lg.png</large>
+	<control>lua_gen</control>
+	<controlmethod>other</controlmethod>
+	<driver>DriverWorks</driver>
+	<minimum_os_version>3.3.0</minimum_os_version>
+	<auto_update>false</auto_update>
+	<proxies>
+		<proxy proxybindingid="5001" name="Washer" primary="True" image_source="c4z" large_image="icons/washer/device_lg.png" small_image="icons/washer/device_sm.png">uibutton</proxy>
+	</proxies>
+	<config>
+		<documentation file="www/documentation.html"/>
+		<script file="driver.lua" jit="1"/>
+		<actions>
+			<action>
+				<name>1. Create OAuth App (uses Personal Access Token)</name>
+				<command>CreateOAuthApp</command>
+			</action>
+			<action>
+				<name>2. Show Authorization URL</name>
+				<command>ShowAuthUrl</command>
+			</action>
+			<action>
+				<name>3. Discover Washers</name>
+				<command>DiscoverDevices</command>
+			</action>
+			<action>
+				<name>Refresh Status</name>
+				<command>RefreshStatus</command>
+			</action>
+			<action>
+				<name>Pause</name>
+				<command>Pause</command>
+			</action>
+			<action>
+				<name>Resume (needs Smart Control on the washer)</name>
+				<command>Resume</command>
+			</action>
+			<action>
+				<name>Stop (cancels the cycle)</name>
+				<command>Stop</command>
+			</action>
+			<action>
+				<name>Start (needs Smart Control on the washer)</name>
+				<command>Start</command>
+			</action>
+			<action>
+				<name>Print Diagnostics</name>
+				<command>PrintDiagnostics</command>
+			</action>
+			<action>
+				<name>Renew Access Token Now</name>
+				<command>RenewToken</command>
+			</action>
+			<action>
+				<name>Sign Out (clear tokens)</name>
+				<command>SignOut</command>
+			</action>
+		</actions>
+		<properties>
+			<property>
+				<name>Driver Version</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Driver Status</name>
+				<type>STRING</type>
+				<default>Not configured</default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Debug Mode</name>
+				<type>LIST</type>
+				<items>
+					<item>Off</item>
+					<item>On</item>
+				</items>
+				<default>Off</default>
+				<readonly>false</readonly>
+			</property>
+
+			<property>
+				<name>SmartThings Account</name>
+				<type>LABEL</type>
+				<default>SmartThings Account</default>
+			</property>
+			<property>
+				<name>Personal Access Token</name>
+				<type>STRING</type>
+				<default></default>
+				<password>true</password>
+				<readonly>false</readonly>
+				<tooltip>From https://account.smartthings.com/tokens with ALL Devices, Locations and Apps scopes ticked. Needed once to create the OAuth app. New tokens expire after 24 hours.</tooltip>
+			</property>
+			<property>
+				<name>OAuth Client ID</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>false</readonly>
+				<tooltip>Filled automatically by '1. Create OAuth App'.</tooltip>
+			</property>
+			<property>
+				<name>OAuth Client Secret</name>
+				<type>STRING</type>
+				<default></default>
+				<password>true</password>
+				<readonly>false</readonly>
+				<tooltip>Filled automatically by '1. Create OAuth App'.</tooltip>
+			</property>
+			<property>
+				<name>OAuth Redirect URI</name>
+				<type>STRING</type>
+				<default>https://httpbin.org/get</default>
+				<readonly>false</readonly>
+				<tooltip>Must exactly match the redirect URI registered on the OAuth app.</tooltip>
+			</property>
+			<property>
+				<name>Authorization URL</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+				<tooltip>Open this in a browser, sign in to Samsung, approve, then paste the code (or the whole redirected URL) into Authorization Code.</tooltip>
+			</property>
+			<property>
+				<name>Authorization Code</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>false</readonly>
+				<tooltip>Paste the code= value (or the full URL you were redirected to). It is exchanged immediately and then cleared.</tooltip>
+			</property>
+			<property>
+				<name>Authorization Status</name>
+				<type>STRING</type>
+				<default>Not authorized</default>
+				<readonly>true</readonly>
+			</property>
+
+			<property>
+				<name>Washer</name>
+				<type>LABEL</type>
+				<default>Washer</default>
+			</property>
+			<property>
+				<name>Select Washer</name>
+				<type>LIST</type>
+				<items>
+					<item>(run Discover Washers)</item>
+				</items>
+				<default>(run Discover Washers)</default>
+				<readonly>false</readonly>
+			</property>
+			<property>
+				<name>Device ID</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>false</readonly>
+				<tooltip>SmartThings deviceId. Filled automatically when a washer is selected.</tooltip>
+			</property>
+			<property>
+				<name>Model</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Reported Features</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Poll Interval When On (seconds)</name>
+				<type>RANGED_INTEGER</type>
+				<minimum>20</minimum>
+				<maximum>300</maximum>
+				<default>30</default>
+				<readonly>false</readonly>
+				<tooltip>How often the washer is read while it is on, running, paused or just finished.</tooltip>
+			</property>
+			<property>
+				<name>Poll Interval When Off (minutes)</name>
+				<type>RANGED_INTEGER</type>
+				<minimum>1</minimum>
+				<maximum>60</maximum>
+				<default>2</default>
+				<readonly>false</readonly>
+				<tooltip>How often the washer is read while it is off or offline. A cycle started at the washer shows up within this time.</tooltip>
+			</property>
+			<property>
+				<name>Show Finished For (minutes)</name>
+				<type>RANGED_INTEGER</type>
+				<minimum>0</minimum>
+				<maximum>1440</maximum>
+				<default>120</default>
+				<readonly>false</readonly>
+				<tooltip>After a cycle, the state stays Finished until the washer is switched on again or this time has passed (0 = until it is switched on again).</tooltip>
+			</property>
+
+			<property>
+				<name>Status</name>
+				<type>LABEL</type>
+				<default>Status</default>
+			</property>
+			<property>
+				<name>Connection</name>
+				<type>STRING</type>
+				<default>Unknown</default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>State</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Job</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Programme</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Time Remaining</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Finish Time</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Progress</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Spin</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Temperature</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Rinses</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Kids Lock</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Remote Control</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Delay End</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Power</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Energy</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Last Finished</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+			<property>
+				<name>Last Update</name>
+				<type>STRING</type>
+				<default></default>
+				<readonly>true</readonly>
+			</property>
+		</properties>
+		<commands>
+			<command>
+				<name>START</name>
+				<description>Start NAME (only when Smart Control is on at the washer)</description>
+			</command>
+			<command>
+				<name>PAUSE</name>
+				<description>Pause NAME</description>
+			</command>
+			<command>
+				<name>RESUME</name>
+				<description>Resume NAME (only when Smart Control is on at the washer)</description>
+			</command>
+			<command>
+				<name>STOP</name>
+				<description>Stop NAME (cancels the cycle)</description>
+			</command>
+			<command>
+				<name>REFRESH</name>
+				<description>Refresh NAME status from SmartThings</description>
+			</command>
+		</commands>
+		<conditionals>
+			<conditional>
+				<id>1</id>
+				<name>STATE</name>
+				<type>LIST</type>
+				<condition_statement>State</condition_statement>
+				<description>NAME State is LOGIC STRING</description>
+				<items>
+					<item>Off</item>
+					<item>Ready</item>
+					<item>Running</item>
+					<item>Paused</item>
+					<item>Finished</item>
+					<item>Error</item>
+				</items>
+			</conditional>
+			<conditional>
+				<id>2</id>
+				<name>REMOTE_CONTROL</name>
+				<type>LIST</type>
+				<condition_statement>Remote Control</condition_statement>
+				<description>NAME Remote Control is LOGIC STRING</description>
+				<items>
+					<item>Enabled</item>
+					<item>Disabled</item>
+				</items>
+			</conditional>
+		</conditionals>
+	</config>
+	<capabilities>
+		<navigator_display_option proxybindingid="5001">
+			<display_icons>
+				<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Washer/icons/washer/unknown_70.png</Icon>
+				<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Washer/icons/washer/unknown_90.png</Icon>
+				<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Washer/icons/washer/unknown_300.png</Icon>
+				<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Washer/icons/washer/unknown_512.png</Icon>
+				<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Washer/icons/washer/unknown_1024.png</Icon>
+				<state id="off">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Washer/icons/washer/off_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Washer/icons/washer/off_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Washer/icons/washer/off_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Washer/icons/washer/off_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Washer/icons/washer/off_1024.png</Icon>
+				</state>
+				<state id="ready">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Washer/icons/washer/ready_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Washer/icons/washer/ready_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Washer/icons/washer/ready_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Washer/icons/washer/ready_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Washer/icons/washer/ready_1024.png</Icon>
+				</state>
+				<state id="running">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Washer/icons/washer/running_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Washer/icons/washer/running_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Washer/icons/washer/running_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Washer/icons/washer/running_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Washer/icons/washer/running_1024.png</Icon>
+				</state>
+				<state id="paused">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Washer/icons/washer/paused_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Washer/icons/washer/paused_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Washer/icons/washer/paused_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Washer/icons/washer/paused_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Washer/icons/washer/paused_1024.png</Icon>
+				</state>
+				<state id="finished">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Washer/icons/washer/finished_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Washer/icons/washer/finished_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Washer/icons/washer/finished_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Washer/icons/washer/finished_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Washer/icons/washer/finished_1024.png</Icon>
+				</state>
+				<state id="error">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Washer/icons/washer/error_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Washer/icons/washer/error_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Washer/icons/washer/error_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Washer/icons/washer/error_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Washer/icons/washer/error_1024.png</Icon>
+				</state>
+				<state id="pending">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Washer/icons/washer/pending_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Washer/icons/washer/pending_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Washer/icons/washer/pending_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Washer/icons/washer/pending_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Washer/icons/washer/pending_1024.png</Icon>
+				</state>
+				<state id="unknown">
+					<Icon width="70" height="70">controller://driver/DirectorLink-Samsung-Washer/icons/washer/unknown_70.png</Icon>
+					<Icon width="90" height="90">controller://driver/DirectorLink-Samsung-Washer/icons/washer/unknown_90.png</Icon>
+					<Icon width="300" height="300">controller://driver/DirectorLink-Samsung-Washer/icons/washer/unknown_300.png</Icon>
+					<Icon width="512" height="512">controller://driver/DirectorLink-Samsung-Washer/icons/washer/unknown_512.png</Icon>
+					<Icon width="1024" height="1024">controller://driver/DirectorLink-Samsung-Washer/icons/washer/unknown_1024.png</Icon>
+				</state>
+			</display_icons>
+		</navigator_display_option>
+	</capabilities>
+	<connections>
+		<connection>
+			<id>5001</id>
+			<facing>6</facing>
+			<connectionname>UIBUTTON Washer</connectionname>
+			<type>2</type>
+			<consumer>False</consumer>
+			<audiosource>False</audiosource>
+			<videosource>False</videosource>
+			<linelevel>False</linelevel>
+			<classes>
+				<class>
+					<classname>UIBUTTON</classname>
+				</class>
+			</classes>
+		</connection>
+	</connections>
+	<events>
+		<event><id>1</id><name>Cycle Started</name><description>When NAME starts a cycle</description></event>
+		<event><id>2</id><name>Cycle Paused</name><description>When NAME pauses a running cycle</description></event>
+		<event><id>3</id><name>Cycle Finished</name><description>When NAME finishes a cycle (once per cycle)</description></event>
+		<event><id>4</id><name>Error</name><description>When NAME reports an error</description></event>
+		<event><id>5</id><name>Remote Control Enabled</name><description>When Smart Control is turned on at NAME (Start and Resume are allowed)</description></event>
+		<event><id>6</id><name>Remote Control Disabled</name><description>When Smart Control turns off at NAME</description></event>
+		<event><id>7</id><name>Command Failed</name><description>When a NAME command is refused, fails or is not confirmed by the washer</description></event>
+		<event><id>8</id><name>Authorization Required</name><description>When NAME loses SmartThings authorization and must be re-authorized</description></event>
+	</events>
+</devicedata>

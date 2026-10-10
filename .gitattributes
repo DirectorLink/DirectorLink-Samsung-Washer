@@ -1,0 +1,4 @@
+# LF in the repository and in every checkout, whatever core.autocrlf says (Git for Windows turns it
+# on by default), so packages built on any OS are identical.
+* text=auto eol=lf
+*.png binary

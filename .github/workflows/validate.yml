@@ -1,0 +1,52 @@
+name: Validate
+
+on:
+  push:
+    branches: ["main", "dev/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.x"
+
+      - name: Install Python tools
+        run: pip install -r requirements-dev.txt
+
+      - name: Install Lua 5.1
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.1
+
+      - name: Check Lua syntax
+        run: luac5.1 -p src/driver.lua
+
+      - name: Check that no secrets or local configuration are committed
+        run: python scripts/check_repo.py
+
+      # The derived fixtures must be what tests/make_fixtures.py makes from the recorded ones.
+      - name: Check the test fixtures
+        run: |
+          python tests/make_fixtures.py
+          git diff --exit-code -- tests/fixtures
+
+      # The real driver.lua under Lua 5.1 and LuaJIT, against a fake Control4 and a fake SmartThings
+      # cloud, on recorded washer answers (tests/fixtures).
+      - name: Run driver tests
+        run: python tests/test_driver.py
+
+      - name: Build and check the package
+        run: python scripts/build.py
+
+      - name: Show package checksum
+        run: (cd dist && sha256sum DirectorLink-Samsung-Washer.c4z)

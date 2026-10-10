@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>DirectorLink · Samsung Washer</title>
+<style>
+  body { font-family: Segoe UI, Arial, sans-serif; font-size: 13px; line-height: 1.45; color: #222; margin: 16px; max-width: 860px; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  h2 { font-size: 16px; margin-top: 24px; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+  h3 { font-size: 14px; margin: 14px 0 4px; }
+  code { background: #f2f2f2; padding: 1px 4px; border-radius: 3px; }
+  table { border-collapse: collapse; margin: 6px 0; }
+  td, th { border: 1px solid #ccc; padding: 4px 8px; text-align: left; vertical-align: top; }
+  th { background: #f2f2f2; }
+  .note { background: #fff7e0; border-left: 4px solid #f0b400; padding: 6px 10px; margin: 10px 0; }
+  .brand { color: #555; margin-top: 0; }
+  .ok { background: #eaf7ea; border-left: 4px solid #3a3; padding: 6px 10px; margin: 10px 0; }
+</style>
+</head>
+<body>
+<h1>DirectorLink · Samsung Washer for Control4</h1>
+<p class="brand">Free, open-source Control4 driver for Samsung Wi-Fi washing machines. Part of DirectorLink Drivers.<br>
+Downloads, updates and help: <code>https://directorlink.io/drivers/samsung-washer</code></p>
+<p>Free. No subscription, no license key, no account with us.</p>
+<p>Made by DirectorLink, the open-source management layer for Control4 homes. Works on its own: DirectorLink is not required.
+DirectorLink's source code: <code>https://github.directorlink.io</code></p>
+<p>DirectorLink is an independent project, not affiliated with Control4 or Snap One. Not affiliated with or endorsed by Samsung.</p>
+<p class="note"><b>Beta (1.0.0-beta.1).</b> Tested against recorded SmartThings answers from real Samsung washers, not yet on a
+real washer. If you install it, please send the <b>Print Diagnostics</b> output (see <i>Testing the beta</i> below).</p>
+<p>Follow and control a Samsung Wi-Fi washing machine from Control4 through the Samsung SmartThings cloud: its state,
+programme, time left and finish time on a <b>Washer</b> tile, events for programming, and safe Pause, Resume, Stop and Start.
+The driver never changes the programme, temperature or spin.</p>
+
+<table>
+  <tr><th>Feature</th><th>In the Control4 app</th><th>Programming</th></tr>
+  <tr><td>Washer tile</td><td>Icon: off, ready, running, paused, finished, error. A tap reads the washer again.</td><td>-</td></tr>
+  <tr><td>State, job, programme, time left, finish time, progress</td><td>Tile text</td><td>Variables, State conditional</td></tr>
+  <tr><td>Spin, temperature, rinses, kids lock, delay end, power</td><td>-</td><td>Variables, properties</td></tr>
+  <tr><td>Cycle Started / Paused / Finished, Error</td><td>-</td><td>Events (Cycle Finished once per cycle)</td></tr>
+  <tr><td>Smart Control on or off</td><td>-</td><td>Events, variable, conditional</td></tr>
+  <tr><td>Pause, Resume, Stop</td><td>-</td><td>Commands and Actions</td></tr>
+  <tr><td>Start</td><td>-</td><td>Command and Action, only while Smart Control is on at the washer</td></tr>
+</table>
+
+<h2>Requirements</h2>
+<ul>
+  <li>The washer is on Wi-Fi and added to the homeowner's <b>SmartThings</b> app.</li>
+  <li>The controller has internet access (HTTPS to <code>api.smartthings.com</code>).</li>
+  <li>About 10 minutes, a browser, and the login of the Samsung account the washer is registered to.</li>
+</ul>
+
+<h2>Setup</h2>
+
+<h3>Step 1 - Create a SmartThings Personal Access Token</h3>
+<ol>
+  <li>On a computer, open <code>https://account.smartthings.com/tokens</code>.</li>
+  <li>Sign in with the <b>same Samsung account that the washer is registered to</b> in the SmartThings app.</li>
+  <li>Click <b>Generate new token</b> and give it any name, for example <i>Control4</i>.</li>
+  <li>Under <b>Authorized Scopes</b>, <b>tick every checkbox</b> in these three sections:
+    <b>Devices</b>, <b>Locations</b>, <b>Apps</b>.
+    If in doubt, tick everything on the page. The token is used once and expires after 24 hours.</li>
+  <li>Click <b>Generate token</b> and copy the value, which looks like <code>1a2b3c4d-1111-2222-3333-444455556666</code>.
+      It's shown only once.</li>
+  <li>In Composer, paste it into the <b>Personal Access Token</b> property and click Set.</li>
+</ol>
+<table>
+  <tr><th>Common token mistakes</th><th>What you see</th></tr>
+  <tr><td>No checkboxes ticked</td><td><i>Create app failed: Forbidden</i></td></tr>
+  <tr><td>Only <b>Devices</b> ticked (Apps missing)</td><td><i>Create app failed: Forbidden ... needs ALL Apps scopes</i></td></tr>
+  <tr><td>Token older than 24 hours</td><td><i>Create app failed: Not authorized</i>. Create a new token.</td></tr>
+  <tr><td>Signed in with a different Samsung account</td><td><i>No washers found</i></td></tr>
+</table>
+
+<h3>Step 2 - Create the OAuth app (this creates your Client ID)</h3>
+<p>On the <b>Actions</b> tab click <b>1. Create OAuth App (uses Personal Access Token)</b>.
+<b>OAuth Client ID</b> and <b>OAuth Client Secret</b> fill in by themselves, and <b>Authorization Status</b> says
+<i>OAuth app created</i>.</p>
+<p class="note">There is nothing to look up: the driver creates the Client ID for you.
+SmartThings never shows the secret again, so write both values down.
+If you add the driver again later, paste the same Client ID and Secret instead of creating a new app.</p>
+
+<h3>Step 3 - Authorize (sign in once)</h3>
+<ol>
+  <li>Click <b>2. Show Authorization URL</b>. The link appears on the <b>Lua</b> tab (Lua Output) and in the
+      <b>Authorization URL</b> property.</li>
+  <li>Open it in a browser and sign in with the same Samsung account. Choose the location with the washer, then click <b>Authorize</b>.</li>
+  <li>The browser goes to a page whose address starts with <code>https://httpbin.org/get?code=</code>.
+      Copy the <b>whole address</b> from the address bar.</li>
+  <li><b>Within a few minutes</b>, paste it into the <b>Authorization Code</b> property and click Set.
+      Codes expire; if it fails, open the link again. Pasted it into <b>OAuth Redirect URI</b> or
+      <b>Personal Access Token</b> by mistake? The driver notices, puts that field back, and signs in anyway.</li>
+</ol>
+<p class="ok"><b>Authorization Status</b> now reads <i>Authorized (OAuth) ... renews automatically</i>.
+From now on, the driver renews its access itself. The Personal Access Token isn't needed anymore.</p>
+
+<h3>Step 4 - Select the washer and show the tile</h3>
+<p>Discovery runs after authorization and lists only washers (not dryers, dishwashers or other devices). With one washer
+it is selected for you; otherwise choose it in <b>Select Washer</b>. <b>Reported Features</b> shows what the washer tells SmartThings.</p>
+<p>The driver appears in the room as <b>Washer</b>. In Composer, open the room's Navigator settings and make the
+<b>Washer</b> tile visible on a menu.</p>
+
+<h3>The Washer tile</h3>
+<table>
+  <tr><th>Icon</th><th>Meaning</th></tr>
+  <tr><td>Gray ring</td><td>Off (or offline in SmartThings)</td></tr>
+  <tr><td>Soft blue ring</td><td>Ready: switched on, not running</td></tr>
+  <tr><td>Blue ring, water in the drum</td><td>Running</td></tr>
+  <tr><td>Amber ring, pause badge</td><td>Paused</td></tr>
+  <tr><td>Green ring, check badge</td><td>Finished</td></tr>
+  <tr><td>Red ring, "!" badge</td><td>The washer reports an error, or authorization is needed</td></tr>
+  <tr><td>White ring with dots</td><td>Refreshing, or a command is waiting for the washer to confirm</td></tr>
+  <tr><td>Faded washer</td><td>Not set up, or no status yet</td></tr>
+</table>
+<p><b>A tap on the tile only reads the washer again and shows its state.</b> It never pauses, starts or stops the washer.
+To pause or resume from a touchscreen, add programming on purpose (for example a custom button running <i>Pause</i>).</p>
+
+<h2>Safe control</h2>
+<ul>
+  <li><b>Pause</b>, <b>Resume</b> and <b>Stop</b> use SmartThings' <code>washerOperatingState.setMachineState</code>.
+      <b>Stop cancels the cycle.</b></li>
+  <li><b>Start</b> and <b>Resume</b> set the drum moving, so they are sent only when the washer itself says remote control is
+      enabled: someone pressed <b>Smart Control</b> on the washer. The driver reads the washer just before deciding. Otherwise the
+      command is refused, <b>Driver Status</b> says <i>Start refused: Press Smart Control on the washer first</i>,
+      <i>Command Failed</i> fires, and the driver never retries by itself.</li>
+  <li>Every command reads the washer first and is refused with a reason when it can't work (for example <i>the washer is not running</i>).
+      After a command the driver re-reads the washer until it confirms, or fires <i>Command Failed</i>. A command is never re-sent.</li>
+  <li>The programme, temperature, spin and other settings are never changed.</li>
+</ul>
+
+<h2>Programming</h2>
+<table>
+  <tr><th>Type</th><th>Items</th></tr>
+  <tr><td>Commands</td><td><b>Start</b> (only with Smart Control on), <b>Pause</b>, <b>Resume</b> (only with Smart Control on),
+      <b>Stop</b> (cancels the cycle), <b>Refresh</b></td></tr>
+  <tr><td>Events</td><td><b>Cycle Started</b> (resuming is not a new cycle), <b>Cycle Paused</b>,
+      <b>Cycle Finished</b> (once per cycle, never repeated while it stays finished or after a restart; a cycle stopped
+      or cancelled before its end doesn't count), <b>Error</b>, <b>Remote Control Enabled</b>, <b>Remote Control Disabled</b>,
+      <b>Command Failed</b>, <b>Authorization Required</b></td></tr>
+  <tr><td>Conditionals</td><td>State is Off / Ready / Running / Paused / Finished / Error; Remote Control is Enabled / Disabled</td></tr>
+  <tr><td>Variables</td><td>
+      STATE (Off, Ready, Running, Paused, Finished, Error; empty before the first read),
+      JOB_STATE (Washing, Rinsing, Spinning, ...; empty when no cycle runs),
+      PROGRAMME (for example Eco 40-60), REMAINING_MINUTES (number), FINISH_TIME (local HH:MM),
+      PROGRESS_PERCENT (number), SPIN (for example 1400 rpm), TEMPERATURE (for example 40 °C),
+      KIDS_LOCK (bool), REMOTE_CONTROL_ENABLED (bool), LAST_FINISHED (ISO 8601 UTC, kept across restarts)</td></tr>
+</table>
+<p><b>Finished</b> lasts from the end of a cycle until someone switches the washer on again, or until <b>Show Finished For</b>
+has passed (default 120 minutes; 0 = until it's switched on again).</p>
+<h3>Examples</h3>
+<ul>
+  <li><b>Laundry's done:</b> on <i>Cycle Finished</i>, send a push notification or flash the hall lights.</li>
+  <li><b>Forgotten laundry:</b> on <i>Cycle Finished</i>, start a 30-minute timer; if <i>State is Finished</i> when it ends, notify again.</li>
+  <li><b>Quiet hours:</b> at 22:00, if <i>State is Running</i>, run <i>Pause</i>.</li>
+</ul>
+
+<h2>Properties</h2>
+<table>
+  <tr><th>Property</th><th>Description</th></tr>
+  <tr><td>Driver Status</td><td>Overall status, or why the last command was refused or failed.</td></tr>
+  <tr><td>Debug Mode</td><td>On prints SmartThings traffic on the Lua tab. Tokens and secrets are never printed.</td></tr>
+  <tr><td>OAuth Redirect URI</td><td>Must match the URI registered on the OAuth app (default <code>https://httpbin.org/get</code>).</td></tr>
+  <tr><td>Poll Interval When On (seconds)</td><td>How often the washer is read while it is on, running, paused or just finished (20-300, default 30).</td></tr>
+  <tr><td>Poll Interval When Off (minutes)</td><td>How often it is read while off or offline (1-60, default 2). A cycle started at the washer shows up within this time.</td></tr>
+  <tr><td>Show Finished For (minutes)</td><td>How long the state stays Finished if the washer isn't switched on again (0-1440, default 120; 0 = until it's switched on).</td></tr>
+  <tr><td>Status section</td><td>Live values: connection, state, job, programme, time left, finish time, progress, spin, temperature,
+      rinses, kids lock, remote control, delay end, power, energy, last finished.</td></tr>
+</table>
+<p class="note">Each read is two requests, so the driver stays well inside SmartThings' limit of about 12 requests a minute
+per device. If SmartThings answers <i>rate limited</i>, polling pauses for two minutes. If the washer drops off Wi-Fi in the
+middle of a cycle, the cycle stays shown (<i>offline, last known</i>) instead of a new one being announced when it comes back.</p>
+
+<h2>Testing the beta</h2>
+<ol>
+  <li>Complete the setup and set <b>Debug Mode</b> to On.</li>
+  <li>With the washer switched on, run <b>Print Diagnostics</b> (Actions tab) and copy the whole output from the Lua tab.</li>
+  <li>Start a cycle at the washer, run <b>Print Diagnostics</b> again while it runs, and check that the tile, State,
+      Programme, Time Remaining and Finish Time match the washer's display.</li>
+  <li>If you can, press Smart Control on the washer and try Pause and Resume. Try Start once with Smart Control off: it must be refused.</li>
+  <li>If the washer shows an error code while you test, run Print Diagnostics while it shows.</li>
+  <li>Send the outputs, the washer's model number and your Control4 OS version from the page above.</li>
+</ol>
+<p>Print Diagnostics never shows a token or secret, the washer's serial number or its full device id.</p>
+
+<h2>Troubleshooting</h2>
+<ul>
+  <li><b>Start refused: Press Smart Control on the washer first</b>: press Smart Control on the washer, then send Start again.</li>
+  <li><b>... does not accept it through SmartThings</b>: this model doesn't offer that control to SmartThings (some washer-dryers).</li>
+  <li><b>... was not confirmed by the washer</b>: SmartThings accepted the command but the washer didn't change. Check that it is
+      online in the SmartThings app and that Smart Control is on.</li>
+  <li><b>Washer offline in SmartThings</b>: some washers leave Wi-Fi when switched off; then State shows Off and this is normal.</li>
+  <li><b>Create app failed</b>: see the token mistakes table in Step 1.</li>
+  <li><b>Authorization failed</b>: the code expired or was already used. Open the link again and paste the new address quickly.</li>
+  <li><b>Re-authorization required</b>: SmartThings rejected the saved token, for example after about 30 days with the controller offline,
+      or after access was removed in the SmartThings app. Repeat Step 3. Steps 1-2 aren't needed.</li>
+  <li><b>Programme shows Course 1C</b>: that course code's name isn't known yet. Send Print Diagnostics and the name on the dial.</li>
+</ul>
+
+<h2>Privacy and security</h2>
+<p>The driver talks only to the Samsung cloud. It sends nothing to DirectorLink and collects no usage data.</p>
+<p>Tokens are kept in Control4's encrypted storage and are never written to the log or shown anywhere.
+The Client Secret is a masked property, but anyone with Composer access to the project can read it.
+To revoke access, remove <i>DirectorLink Samsung Washer</i> from the connected services in the SmartThings app,
+or click <b>Sign Out (clear tokens)</b>.</p>
+<h2>Updates</h2>
+<p>Download new versions from <code>https://directorlink.io/drivers/samsung-washer</code> and install them with <b>Driver &rarr; Add or Update Driver or Agent</b>. The file must be named exactly <code>DirectorLink-Samsung-Washer.c4z</code>. A copy named <code>DirectorLink-Samsung-Washer (1).c4z</code> would be added as a separate driver instead of updating this one, so delete older downloads first.</p>
+<h2>Change log</h2>
+<p><b>1.0.0-beta.1</b> - First release, for testing.</p>
+<h2>Support</h2>
+<p>Community-supported, best effort. Report problems from the page above.</p>
+<p>Apache License 2.0. Copyright 2026 DirectorLink. DirectorLink is an independent project, not affiliated with Control4 or Snap One. Not affiliated with or endorsed by Samsung. Samsung, SmartThings, Control4 and related names are trademarks of their respective owners.</p>
+</body>
+</html>

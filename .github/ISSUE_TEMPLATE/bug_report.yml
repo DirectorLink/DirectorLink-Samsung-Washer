@@ -1,0 +1,48 @@
+name: Bug report or beta test report
+description: Something doesn't work with your washer, or a report from testing the beta
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! **Never paste** your Personal Access Token, the OAuth Client Secret,
+        or an authorization link or code. Print Diagnostics never contains them.
+  - type: input
+    id: driver_version
+    attributes:
+      label: Driver Version
+      description: The "Driver Version" property in Composer
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Washer
+      description: The model number on the washer's label (for example WW90CGC04DAH), and the "Model" property in Composer
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Control4 OS version
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+      description: For a beta test report, say what matched the washer's display and what didn't.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Print Diagnostics output
+      description: Run Print Diagnostics on the driver's Actions tab and copy everything from "===== DirectorLink · Samsung Washer - diagnostics =====" to "===== end of diagnostics =====". Once with the washer on, and once while a cycle runs, if you can.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Lua output
+      description: Set Debug Mode to On, reproduce the problem, and copy the Lua tab's output. The driver never prints tokens or secrets, but remove anything personal.
+      render: text

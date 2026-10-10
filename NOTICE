@@ -1,0 +1,47 @@
+DirectorLink · Samsung Washer for Control4
+Copyright 2026 DirectorLink
+
+Licensed under the Apache License, Version 2.0.
+
+DirectorLink is an independent project, not affiliated with Control4 or Snap One.
+Not affiliated with or endorsed by Samsung. Samsung, SmartThings, Control4 and related names
+are trademarks of their respective owners.
+
+Third-party material
+
+The washer test fixtures in tests/fixtures/ come from Home Assistant
+(https://github.com/home-assistant/core, tests/components/smartthings/fixtures),
+Copyright Home Assistant contributors, licensed under the Apache License, Version 2.0:
+devices_*.json and status_da_wm_wm_000001.json, status_da_wm_wm_000001_1.json,
+status_da_wm_wm_01011.json, status_da_wm_wm_100001.json and status_da_wm_wm_100002.json.
+Changed here: appliance serial numbers and OTN ids in "execute" data were replaced with
+placeholders. The files status_da_wm_wm_01011_paused.json, _finished.json, _error.json and
+_ready_remote_off.json are derived from status_da_wm_wm_01011.json by tests/make_fixtures.py,
+which changes only the attributes it lists; the error in _error.json has an assumed shape.
+
+The programme names in src/driver.lua (COURSE_NAMES) come from the course tables of
+localthings (https://github.com/mbillow/localthings,
+custom_components/localthings/translations/en.json), Copyright (c) 2026 Marc Billow,
+licensed under the MIT License:
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+  software and associated documentation files (the "Software"), to deal in the Software
+  without restriction, including without limitation the rights to use, copy, modify, merge,
+  publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+  to whom the Software is furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies or
+  substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+  PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+  FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+  DEALINGS IN THE SOFTWARE.
+
+The SmartThings login, API client, JSON codec and test harness are carried over from
+DirectorLink · Samsung Refrigerator (https://github.com/DirectorLink/DirectorLink-Samsung-Refrigerator),
+Copyright 2026 DirectorLink, Apache License 2.0. The washer commands follow Home Assistant's
+smartthings integration (washerOperatingState.setMachineState, only with remote control enabled);
+no code was copied from it.
